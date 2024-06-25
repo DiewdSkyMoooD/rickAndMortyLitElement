@@ -12,6 +12,7 @@ class HomePage extends LitElement {
       persons: { type: Array },
       favorites: { type: Array },
       modalIsOpen: { type: Boolean },
+      apiUrl: { type: String },
     };
   }
 
@@ -20,20 +21,27 @@ class HomePage extends LitElement {
     this.persons = [];
     this.favorites = [];
     this.modalIsOpen = false;
+    this.apiUrl = "https://rickandmortyapi.com/api/character";
   }
 
   firstUpdated() {
-    this.getPersons();
+    this.observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && this.apiUrl != null) {
+        this.getPersons();
+      }
+    });
+    this.observer.observe(this.shadowRoot.getElementById("sentinel"));
   }
 
   getPersons() {
-    fetch("https://rickandmortyapi.com/api/character")
+    fetch(this.apiUrl)
       .then((response) => response.json())
       .then((data) => {
+        this.apiUrl = data.info.next;
         let dataModify = data.results.map((person) => {
           return { ...person, favorite: false };
         });
-        this.persons = dataModify;
+        this.persons = [...this.persons, ...dataModify];
       });
   }
 
@@ -90,6 +98,8 @@ class HomePage extends LitElement {
           ></favorite-characters>
         </div>
       </div>
+
+      <div id="sentinel"></div>
     `;
   }
 }
